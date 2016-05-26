@@ -35,6 +35,8 @@ function cmd_test($dsn)
     $client = new Raven_Client($dsn, array(
         'trace' => true,
         'curl_method' => 'sync',
+        'app_path' => realpath(__DIR__ . '/..'),
+        'base_path' => realpath(__DIR__ . '/..'),
     ));
 
     $config = get_object_vars($client);
@@ -74,6 +76,10 @@ function cmd_test($dsn)
 function main() {
     global $argv;
 
+    if (!isset($argv[1])) {
+        exit('Usage: sentry test <dsn>');
+    }
+
     $cmd = $argv[1];
 
     switch ($cmd) {
@@ -81,7 +87,7 @@ function main() {
             cmd_test(@$argv[2]);
             break;
         default:
-            exit('Usage: raven test <dsn>');
+            exit('Usage: sentry test <dsn>');
     }
 }
 

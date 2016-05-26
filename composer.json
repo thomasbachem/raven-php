@@ -1,5 +1,5 @@
 {
-    "name": "raven/raven",
+    "name": "sentry/sentry",
     "type": "library",
     "description": "A PHP client for Sentry (http://getsentry.com)",
     "keywords": ["log", "logging"],
@@ -17,10 +17,14 @@
     },
     "require": {
         "php": ">=5.2.4",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "monolog/monolog": "*"
+    },
+    "conflict": {
+        "raven/raven": "*"
     },
     "bin": [
-        "bin/raven"
+        "bin/sentry"
     ],
     "autoload": {
         "psr-0" : {
@@ -29,7 +33,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.14.x-dev"
+            "dev-master": "0.19.x-dev"
         }
     }
 }

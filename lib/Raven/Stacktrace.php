@@ -14,7 +14,8 @@ class Raven_Stacktrace
     );
 
     public static function get_stack_info($frames, $trace = false, $shiftvars = true, $errcontext = null,
-                            $frame_var_limit = Raven_Client::MESSAGE_LIMIT)
+                                          $frame_var_limit = Raven_Client::MESSAGE_LIMIT, $strip_prefixes = null,
+                                          $app_path = null)
     {
         /**
          * PHP's way of storing backstacks seems bass-ackwards to me
@@ -53,10 +54,12 @@ class Raven_Stacktrace
             } else {
                 $context = self::read_source_file($frame['file'], $frame['line']);
                 $abs_path = $frame['file'];
-                $filename = basename($frame['file']);
             }
 
-            $module = $filename;
+            // strip base path if present
+            $context['filename'] = self::strip_prefixes($context['filename'], $strip_prefixes);
+
+            $module = basename($abs_path);
             if (isset($nextframe['class'])) {
                 $module .= ':' . $nextframe['class'];
             }
@@ -77,7 +80,9 @@ class Raven_Stacktrace
             }
 
             $data = array(
-                'abs_path' => $abs_path,
+                // abs_path isn't overly useful, wastes space, and exposes
+                // filesystem internals
+                // 'abs_path' => $abs_path,
                 'filename' => $context['filename'],
                 'lineno' => (int) $context['lineno'],
                 'module' => $module,
@@ -86,11 +91,19 @@ class Raven_Stacktrace
                 'context_line' => $context['line'],
                 'post_context' => $context['suffix'],
             );
+
+            // detect in_app based on app path
+            if ($app_path) {
+                $data['in_app'] = (bool)(substr($abs_path, 0, strlen($app_path)) === $app_path);
+            }
+
             // dont set this as an empty array as PHP will treat it as a numeric array
             // instead of a mapping which goes against the defined Sentry spec
             if (!empty($vars)) {
+                $serializer = new Raven_ReprSerializer();
                 $cleanVars = array();
                 foreach ($vars as $key => $value) {
+                    $value = $serializer->serialize($value);
                     if (is_string($value) || is_numeric($value)) {
                         $cleanVars[$key] = substr($value, 0, $frame_var_limit);
                     } else {
@@ -189,6 +202,19 @@ class Raven_Stacktrace
         }
 
         return $args;
+    }
+
+    private static function strip_prefixes($filename, $prefixes)
+    {
+        if ($prefixes === null) {
+            return $filename;
+        }
+        foreach ($prefixes as $prefix) {
+            if (substr($filename, 0, strlen($prefix)) === $prefix) {
+                return substr($filename, strlen($prefix) + 1);
+            }
+        }
+        return $filename;
     }
 
     private static function read_source_file($filename, $lineno, $context_lines = 5)

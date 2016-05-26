@@ -77,9 +77,9 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
         }
     }
 
-    public function testParseDsnHttp()
+    public function testParseDSNHttp()
     {
-        $result = Raven_Client::parseDsn('http://public:secret@example.com/1');
+        $result = Raven_Client::ParseDSN('http://public:secret@example.com/1');
 
         $this->assertEquals($result['project'], 1);
         $this->assertEquals($result['server'], 'http://example.com/api/1/store/');
@@ -87,9 +87,9 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($result['secret_key'], 'secret');
     }
 
-    public function testParseDsnHttps()
+    public function testParseDSNHttps()
     {
-        $result = Raven_Client::parseDsn('https://public:secret@example.com/1');
+        $result = Raven_Client::ParseDSN('https://public:secret@example.com/1');
 
         $this->assertEquals($result['project'], 1);
         $this->assertEquals($result['server'], 'https://example.com/api/1/store/');
@@ -97,9 +97,9 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($result['secret_key'], 'secret');
     }
 
-    public function testParseDsnPath()
+    public function testParseDSNPath()
     {
-        $result = Raven_Client::parseDsn('http://public:secret@example.com/app/1');
+        $result = Raven_Client::ParseDSN('http://public:secret@example.com/app/1');
 
         $this->assertEquals($result['project'], 1);
         $this->assertEquals($result['server'], 'http://example.com/app/api/1/store/');
@@ -107,9 +107,9 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($result['secret_key'], 'secret');
     }
 
-    public function testParseDsnPort()
+    public function testParseDSNPort()
     {
-        $result = Raven_Client::parseDsn('http://public:secret@example.com:9000/app/1');
+        $result = Raven_Client::ParseDSN('http://public:secret@example.com:9000/app/1');
 
         $this->assertEquals($result['project'], 1);
         $this->assertEquals($result['server'], 'http://example.com:9000/app/api/1/store/');
@@ -117,30 +117,30 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($result['secret_key'], 'secret');
     }
 
-    public function testParseDsnInvalidScheme()
+    public function testParseDSNInvalidScheme()
     {
         try {
-            Raven_Client::parseDsn('gopher://public:secret@/1');
+            Raven_Client::ParseDSN('gopher://public:secret@/1');
             $this->fail();
         } catch (Exception $e) {
             return;
         }
     }
 
-    public function testParseDsnMissingNetloc()
+    public function testParseDSNMissingNetloc()
     {
         try {
-            Raven_Client::parseDsn('http://public:secret@/1');
+            Raven_Client::ParseDSN('http://public:secret@/1');
             $this->fail();
         } catch (Exception $e) {
             return;
         }
     }
 
-    public function testParseDsnMissingProject()
+    public function testParseDSNMissingProject()
     {
         try {
-            Raven_Client::parseDsn('http://public:secret@example.com');
+            Raven_Client::ParseDSN('http://public:secret@example.com');
             $this->fail();
         } catch (Exception $e) {
             return;
@@ -150,16 +150,16 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
     /**
      * @expectedException InvalidArgumentException
      */
-    public function testParseDsnMissingPublicKey()
+    public function testParseDSNMissingPublicKey()
     {
-        Raven_Client::parseDsn('http://:secret@example.com/1');
+        Raven_Client::ParseDSN('http://:secret@example.com/1');
     }
     /**
      * @expectedException InvalidArgumentException
      */
-    public function testParseDsnMissingSecretKey()
+    public function testParseDSNMissingSecretKey()
     {
-        Raven_Client::parseDsn('http://public@example.com/1');
+        Raven_Client::ParseDSN('http://public@example.com/1');
     }
 
     public function testDsnFirstArgument()
@@ -193,6 +193,31 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
         ));
 
         $this->assertEquals($client->server, 'http://example.com/api/1/store/');
+    }
+
+
+    public function testDsnInOptionsFirstArg()
+    {
+        $client = new Raven_Client(array(
+            'dsn' => 'http://public:secret@example.com/1',
+        ));
+
+        $this->assertEquals($client->project, 1);
+        $this->assertEquals($client->server, 'http://example.com/api/1/store/');
+        $this->assertEquals($client->public_key, 'public');
+        $this->assertEquals($client->secret_key, 'secret');
+    }
+
+    public function testDsnInOptionsSecondArg()
+    {
+        $client = new Raven_Client(null, array(
+            'dsn' => 'http://public:secret@example.com/1',
+        ));
+
+        $this->assertEquals($client->project, 1);
+        $this->assertEquals($client->server, 'http://example.com/api/1/store/');
+        $this->assertEquals($client->public_key, 'public');
+        $this->assertEquals($client->secret_key, 'secret');
     }
 
     public function testOptionsFirstArgumentWithOptions()
@@ -449,6 +474,10 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
             'site' => $client->site,
             'logger' => $client->logger,
             'tags' => $client->tags,
+            'sdk' => array(
+                'name' => 'sentry-php',
+                'version' => $client::VERSION,
+            ),
         );
         $this->assertEquals($expected, $client->get_default_data());
     }
@@ -555,14 +584,14 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
     {
         $client = new Dummy_Raven_Client();
 
-        $clientstring = 'raven-php/test';
+        $clientstring = 'sentry-php/test';
         $timestamp = '1234341324.340000';
 
         $expected = "Sentry sentry_timestamp={$timestamp}, sentry_client={$clientstring}, " .
                     "sentry_version=" . Dummy_Raven_Client::PROTOCOL . ", " .
                     "sentry_key=publickey, sentry_secret=secretkey";
 
-        $this->assertEquals($expected, $client->get_auth_header($timestamp, 'raven-php/test', 'publickey', 'secretkey'));
+        $this->assertEquals($expected, $client->get_auth_header($timestamp, 'sentry-php/test', 'publickey', 'secretkey'));
     }
 
     public function testCaptureMessageWithUserContext()
@@ -614,6 +643,13 @@ class Raven_Tests_ClientTest extends PHPUnit_Framework_TestCase
             'foo' => 'bar',
             'biz' => 'baz',
         ), $event['extra']);
+    }
+
+    public function testGetLastEventID()
+    {
+        $client = new Dummy_Raven_Client();
+        $client->capture(array('message' => 'test', 'event_id' => 'abc'));
+        $this->assertEquals($client->getLastEventID(), 'abc');
     }
 
     public function cb1($data)

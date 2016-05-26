@@ -259,4 +259,71 @@ class Raven_Tests_StacktraceTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('StacktraceTest.php', $frame['module']);
         $this->assertEquals('raven_test_recurse', $frame['function']);
     }
+
+    public function testInApp()
+    {
+        $stack = array(
+            array(
+                "file" => dirname(__FILE__) . "/resources/a.php",
+                "line" => 11,
+                "function" => "a_test",
+            ),
+            array(
+                "file" => dirname(__FILE__) . "/resources/b.php",
+                "line" => 3,
+                "function" => "include_once",
+            ),
+        );
+
+        $frames = Raven_Stacktrace::get_stack_info($stack, true, null, null, 0, null, dirname(__FILE__));
+
+        $this->assertEquals($frames[0]['in_app'], true);
+        $this->assertEquals($frames[1]['in_app'], true);
+    }
+
+    public function testBasePath()
+    {
+        $stack = array(
+            array(
+                "file" => dirname(__FILE__) . "/resources/a.php",
+                "line" => 11,
+                "function" => "a_test",
+            ),
+            array(
+                "file" => dirname(__FILE__) . "/resources/b.php",
+                "line" => 3,
+                "function" => "include_once",
+            ),
+        );
+
+        $frames = Raven_Stacktrace::get_stack_info($stack, true, null, null, 0, array(dirname(__FILE__)));
+
+        $this->assertEquals($frames[0]['filename'], 'resources/b.php');
+        $this->assertEquals($frames[1]['filename'], 'resources/a.php');
+    }
+
+    public function testNoBasePath()
+    {
+        $stack = array(
+            array(
+                "file" => dirname(__FILE__) . "/resources/a.php",
+                "line" => 11,
+                "function" => "a_test",
+            ),
+        );
+
+        $frames = Raven_Stacktrace::get_stack_info($stack);
+        $this->assertEquals($frames[0]['filename'], dirname(__FILE__) . '/resources/a.php');
+    }
+
+    public function testWithEvaldCode()
+    {
+        try {
+            eval("throw new Exception('foobar');");
+        } catch (Exception $ex) {
+            $trace = $ex->getTrace();
+            $frames = Raven_Stacktrace::get_stack_info($trace);
+        }
+        $this->assertEquals($frames[count($frames) -1]['filename'], __FILE__);
+    }
 }

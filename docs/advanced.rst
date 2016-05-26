@@ -3,7 +3,7 @@ Advanced Topics
 
 This covers various advanced usage topics for the PHP client.
 
-.. _raven-php-advanced-installation:
+.. _sentry-php-advanced-installation:
 
 Advanced Installation
 ---------------------
@@ -14,25 +14,25 @@ Install with Composer
 `````````````````````
 
 If you're using `Composer <https://getcomposer.org/>`_ to manage
-dependencies, you can add Raven with it.
+dependencies, you can add the Sentry SDK with it.
 
 .. code-block:: json
 
     {
         "require": {
-            "raven/raven": "$VERSION"
+            "sentry/sentry": "$VERSION"
         }
     }
 
 (replace ``$VERSION`` with one of the available versions on `Packagist
-<https://packagist.org/packages/raven/raven>`_) or to get the latest
+<https://packagist.org/packages/sentry/sentry>`_) or to get the latest
 version off the master branch:
 
 .. code-block:: json
 
     {
         "require": {
-            "raven/raven": "dev-master"
+            "sentry/sentry": "dev-master"
         }
     }
 
@@ -48,7 +48,7 @@ Install Source from GitHub
 
 To install the source code::
 
-    $ git clone git://github.com/getsentry/raven-php.git
+    $ git clone git://github.com/getsentry/sentry-php.git
 
 And including it using the autoloader:
 

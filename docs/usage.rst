@@ -1,7 +1,7 @@
 Usage
 =====
 
-Using Raven for PHP is straightforward.  After installation of the library
+Using Sentry with PHP is straightforward.  After installation of the library
 you can directly interface with the client and start submitting data.
 
 Basics
@@ -17,8 +17,8 @@ once and reference it from anywhere you want to interface with Sentry:
 Capturing Errors
 ----------------
 
-The most basic functionality is to use Raven for reporting any uncaught
-exceptions or PHP errors.  As this functionality is common enough, Raven
+The most basic functionality is to use Sentry for reporting any uncaught
+exceptions or PHP errors.  As this functionality is common enough, Sentry
 provides support for this out of the box:
 
 .. code-block:: php
@@ -58,12 +58,152 @@ takes a message and reports it to sentry.
     // Capture a message
     $event_id = $client->getIdent($client->captureMessage('my log message'));
 
-Give User Feedback
-------------------
+Optional Attributes
+-------------------
 
-The `event_id` returned can be shown to the user to help track down the
-particular exception in Sentry later.  In case reporting to Sentry failed
-you can also detect that:
+With calls to ``captureException`` or ``captureMessage`` additional data
+can be supplied:
+
+.. code-block:: php
+
+    $client->captureException($ex, array('attr' => 'value'))
+
+.. describe:: extra
+
+Additional context for this event. Must be a mapping. Children can be any native JSON type.
+
+.. code-block:: php
+
+    array(
+        'extra' => array('key' => 'value')
+    )
+
+.. describe:: fingerprint
+
+The fingerprint for grouping this event.
+
+.. code-block:: php
+
+    array(
+        'fingerprint' => ['{{ default }}', 'other value']
+    )
+
+.. describe:: level
+
+The level of the event. Defaults to ``error``.
+
+.. code-block:: php
+
+    array(
+        'level' => 'warning'
+    )
+
+Sentry is aware of the following levels:
+
+* debug (the least serious)
+* info
+* warning
+* error
+* fatal (the most serious)
+
+.. describe:: logger
+
+The logger name for the event.
+
+.. code-block:: php
+
+    array(
+        'logger' => 'default'
+    )
+
+.. describe:: tags
+
+Tags to index with this event. Must be a mapping of strings.
+
+.. code-block:: php
+
+    array(
+        'tags' => array('key' => 'value')
+    )
+
+.. describe:: user
+
+The acting user.
+
+.. code-block:: php
+
+    array(
+        'user' => array(
+            'id' => 42,
+            'email' => 'clever-girl'
+        )
+    )
+
+Getting Back an Event ID
+------------------------
+
+An event id is a globally unique id for the event that was just sent. This
+event id can be used to find the exact event from within Sentry.
+
+This is often used to display for the user and report an error to customer
+service.
+
+.. code-block:: php
+
+    $client->getLastEventID();
+
+.. _php-user-feedback:
+
+User Feedback
+-------------
+
+To enable user feedback for crash reports you will need to create an error handler
+which is aware of the last event ID.
+
+.. sourcecode:: php
+
+    <?php
+
+    $sentry = new \Raven_Client(___DSN___);
+
+    public class App {
+        function error500($exc) {
+            $event_id = $sentry->captureException($exc);
+
+            return $this->render('500.html', array(
+                'sentry_event_id' => $event_id,
+            ), 500);
+        }
+    }
+
+Then in your template you can load up the feedback widget:
+
+.. sourcecode:: html+django
+
+    <!-- Sentry JS SDK 2.1.+ required -->
+    <script src="https://cdn.ravenjs.com/2.3.0/raven.min.js"></script>
+
+    {% if sentry_event_id %}
+      <script>
+      Raven.showReportDialog({
+        eventId: '{{ sentry_event_id }}',
+
+        // use the public DSN (dont include your secret!)
+        dsn: '___PUBLIC_DSN___'
+      });
+      </script>
+    {% endif %}
+
+That's it!
+
+For more details on this feature, see the :doc:`User Feedback guide <../../../learn/user-feedback>`.
+
+Handling Failures
+-----------------
+
+The SDK attempts to minimize failures, and when they happen will always try to avoid bubbling them up
+to your application. If you do want to know when an event fails to record, you can use the ``getLastError``
+helper:
 
 .. code-block:: php
 
@@ -76,86 +216,34 @@ you can also detect that:
         echo "Your reference ID is " . $event_id;
     }
 
-Optional Attributes
--------------------
+Breadcrumbs
+-----------
 
-With calls to ``captureException`` or ``captureMessage`` additional data
-can be supplied::
+Sentry supports capturing breadcrumbs -- events that happened prior to an issue.
 
-    .. code-block:: php
+.. code-block:: php
 
-      $client->captureException($ex, array('attr' => 'value'))
+    $client->breadcrumbs->record(array(
+        'message' => 'Authenticating user as ' . $username,
+        'category' => 'auth',
+        'level' => 'info',
+    ));
 
-.. describe:: extra
+Filtering Out Errors
+--------------------
 
-    Additional context for this event. Must be a mapping. Children can be any native JSON type.
+Its common that you might want to prevent automatic capture of certain areas. Ideally you simply would avoid calling out to Sentry in that case, but that's often easier said than done. Instead, you can provide a function which the SDK will call before it sends any data, allowing you both to mutate that data, as well as prevent it from being sent to the server.
 
-    .. code-block:: php
+.. code-block:: php
 
-        array(
-            'extra' => array('key' => 'value')
-        )
+    $client->setSendCallback(function($data) {
+        $ignore_types = array('Symfony\Component\HttpKernel\Exception\NotFoundHttpException')
 
-.. describe:: fingerprint
-
-    The fingerprint for grouping this event.
-
-    .. code-block:: php
-
-        array(
-            'fingerprint' => ['{{ default }}', 'other value']
-        )
-
-.. describe:: level
-
-    The level of the event. Defaults to ``error``.
-
-    .. code-block:: php
-
-        array(
-            'level' => 'warning'
-        )
-
-    Sentry is aware of the following levels:
-
-    * debug (the least serious)
-    * info
-    * warning
-    * error
-    * fatal (the most serious)
-
-.. describe:: logger
-
-    The logger name for the event.
-
-    .. code-block:: php
-
-        array(
-            'logger' => 'default'
-        )
-
-.. describe:: tags
-
-    Tags to index with this event. Must be a mapping of strings.
-
-    .. code-block:: php
-
-        array(
-            'tags' => array('key' => 'value')
-        )
-
-.. describe:: user
-
-    The acting user.
-
-    .. code-block:: php
-
-        array(
-            'user' => array(
-                'id' => 42,
-                'email' => 'clever-girl'
-            )
-        )
+        if (isset($data['exception'] && in_array($data['exception']['values'][0]['type'], $ignore_types)
+        {
+            return false;
+        }
+    });
 
 Testing Your Connection
 -----------------------
@@ -163,7 +251,7 @@ Testing Your Connection
 The PHP client includes a simple helper script to test your connection and
 credentials with the Sentry master server::
 
-    $ bin/raven test ___DSN___
+    $ bin/sentry test ___DSN___
     Client configuration:
     -> server: [___API_URL___]
     -> project: ___PROJECT_ID___

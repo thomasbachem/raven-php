@@ -1,11 +1,11 @@
-raven-php
-=========
+sentry-php
+==========
 
-.. image:: https://secure.travis-ci.org/getsentry/raven-php.png?branch=master
-   :target: http://travis-ci.org/getsentry/raven-php
+.. image:: https://secure.travis-ci.org/getsentry/sentry-php.png?branch=master
+   :target: http://travis-ci.org/getsentry/sentry-php
 
 
-raven-php is a PHP client for `Sentry <http://aboutsentry.com/>`_.
+The official PHP SDK for `Sentry <https://getsentry.com/>`_.
 
 .. code-block:: php
 
@@ -49,14 +49,14 @@ dependencies, you can add Raven with it.
 
 ::
 
-    $ composer require raven/raven:$VERSION
+    $ composer require sentry/sentry:$VERSION
 
-(replace ``$VERSION`` with one of the available versions on `Packagist <https://packagist.org/packages/raven/raven>`_)
+(replace ``$VERSION`` with one of the available versions on `Packagist <https://packagist.org/packages/sentry/sentry>`_)
 or to get the latest version off the master branch:
 
 ::
 
-    $ composer require raven/raven:dev-master
+    $ composer require sentry/sentry:dev-master
 
 Note that using unstable versions is not recommended and should be avoided. Also
 you should define a maximum version, e.g. by doing ``>=0.6,<1.0`` or ``~0.6``.
@@ -65,7 +65,7 @@ Alternatively, use the ``^`` operator for specifying a version, e.g.,
 
 ::
 
-    $ composer require raven/raven:^0.11.0
+    $ composer require sentry/sentry:^0.11.0
 
 Composer will take care of the autoloading for you, so if you require the
 ``vendor/autoload.php``, you're good to go.
@@ -78,7 +78,7 @@ To install the source code:
 
 ::
 
-    $ git clone git://github.com/getsentry/raven-php.git
+    $ git clone git://github.com/getsentry/sentry-php.git
 
 And including it using the autoloader:
 
@@ -95,7 +95,7 @@ the Sentry master server:
 
 .. code-block:: bash
 
-    $ bin/raven test https://public:secret@app.getsentry.com/1
+    $ bin/sentry test https://public:secret@app.getsentry.com/1
     Client configuration:
     -> server: [https://sentry.example.com/api/store/]
     -> project: 1
@@ -267,7 +267,7 @@ You may now use phpunit :
 Resources
 ---------
 
-* `Bug Tracker <http://github.com/getsentry/raven-php/issues>`_
-* `Code <http://github.com/getsentry/raven-php>`_
+* `Bug Tracker <http://github.com/getsentry/sentry-php/issues>`_
+* `Code <http://github.com/getsentry/sentry-php>`_
 * `Mailing List <https://groups.google.com/group/getsentry>`_
 * `IRC <irc://irc.freenode.net/sentry>`_  (irc.freenode.net, #sentry)

@@ -1,8 +1,12 @@
 .PHONY: test
 
-develop:
+develop: update-submodules
 	composer install --dev
 	make setup-git
+
+update-submodules:
+	git submodule init
+	git submodule update
 
 cs:
 	vendor/bin/php-cs-fixer fix --config-file=.php_cs --verbose --diff
@@ -10,7 +14,7 @@ cs:
 cs-dry-run:
 	vendor/bin/php-cs-fixer fix --config-file=.php_cs --verbose --diff --dry-run
 
-test:
+test: cs-dry-run
 	vendor/bin/phpunit
 
 setup-git:
